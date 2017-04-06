@@ -1,7 +1,7 @@
 # Mask RCNN in PyTorch
 1. This is a [PyTorch](https://github.com/pytorch/pytorch) implementation of [Mask RCNN](https://arxiv.org/abs/1703.06870) which attempts to reproduce the results in [Mask RCNN](https://arxiv.org/abs/1703.06870).
 2. This project provides an implementation of ROI Align in CUDA C as well as a PyTorch nn.Module for it.
-3. The model architecture is based on the awesome [faster_rcnn_pytorch](https://github.com/longcw/faster_rcnn_pytorch) repo.
+3. The model architecture is based on the awesome [Faster RCNN with PyTorch](https://github.com/longcw/faster_rcnn_pytorch) repo.
 4. The experiment setup is based on [Image Classification Project Killer in Pytorch](https://github.com/felixgwu/img_classification_pk_pytorch) to minimize the effort of doing experiments and developing new models.
 
 Spectial thanks to [Fast Mask RCNN](https://github.com/CharlesShang/FastMaskRCNN) for being the catalyst of this project.
