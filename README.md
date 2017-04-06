@@ -3,6 +3,7 @@
 2. This project provides an implementation of ROI Align in CUDA C as well as a PyTorch nn.Module for it.
 3. The model architecture is based on the awesome [faster_rcnn_pytorch](https://github.com/longcw/faster_rcnn_pytorch) repo.
 4. The experiment setup is based on [Image Classification Project Killer in Pytorch](https://github.com/felixgwu/img_classification_pk_pytorch) to minimize the effort of doing experiments and developing new models.
+
 Spectial thanks to [Fast Mask RCNN](https://github.com/CharlesShang/FastMaskRCNN) for being the catalyst of this project.
 
 ## Progress (with expected time)
