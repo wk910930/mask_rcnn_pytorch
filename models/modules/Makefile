@@ -4,4 +4,5 @@ all: setup.py
 	$(MAKE) -C roi_align
 
 clean:
+	rm -rf utils/*.c utils/*.so
 	$(MAKE) -C roi_align clean

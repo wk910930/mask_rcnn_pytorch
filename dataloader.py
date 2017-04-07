@@ -79,6 +79,8 @@ class CocoDetectionTrainVal(torch.utils.data.Dataset):
         self.ids = list(self.coco_train.imgs.keys()) + list(self.coco_val.imgs.keys())
         self.transform = transform
         self.scale_size = scale_size
+        self.ord2cid = sorted(self.coco_train.cats.keys())
+        self.cid2ord = {i: o for o, i in enumerate(self.ord2cid)}
 
     def __getitem__(self, index):
         coco = self.coco_train if index < len(self.coco_train.imgs) else self.coco_val
@@ -92,6 +94,11 @@ class CocoDetectionTrainVal(torch.utils.data.Dataset):
         img = Image.open(os.path.join(self.root, img_root, path)).convert('RGB')
 
         for ann in anns:
+            # COCO uses x, y, w, h, but Faster RCNN uses x1, y1, x2, y2
+            ann['bbox'][2] += ann['bbox'][0]
+            ann['bbox'][3] += ann['bbox'][1]
+            ann['ordered_id'] = self.cid2ord[ann['category_id']]
+            ann['scale_ratio'] = 1.
             ann['mask'] = torch.from_numpy(coco.annToMask(ann)).float().unsqueeze(0)
 
         # scaling
@@ -107,9 +114,11 @@ class CocoDetectionTrainVal(torch.utils.data.Dataset):
                     ann['segmentation'] = [[x * scale_ratio for x in y]
                                            for y in ann['segmentation']]
                     mask = transforms.ToPILImage()(ann['mask'])
-                    mask = mask.resize((int(w * scale_ratio), int(h * scale_ratio)),
+                    mask = mask.resize((round(w * scale_ratio + 0.5),
+                                        round(h * scale_ratio + 0.5)),
                                        Image.BILINEAR)
                     ann['mask'] = transforms.ToTensor()(mask)
+                    ann['scale_ratio'] = scale_ratio
 
         if self.transform is not None:
             img = self.transform(img)
