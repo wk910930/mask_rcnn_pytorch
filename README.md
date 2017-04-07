@@ -7,7 +7,7 @@
 Spectial thanks to [Fast Mask RCNN](https://github.com/CharlesShang/FastMaskRCNN) for being the catalyst of this project.
 
 ## Progress (with expected time)
-- [x] Implement ROIAlign layer
+- [x] ROIAlign layer (It is not explained how four regular locations are chosen, so currently, this implementation uses 4 corners of each bin. This may be changed either after hyper-parameter tuning stage or after the release of the original code.)
 - [x] COCO dataloader with mask
 - [x] FastRCNN with ROIAlign using ResNet-50-C4
 - [ ] Training code (4/8)
