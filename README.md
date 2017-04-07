@@ -9,12 +9,15 @@ Spectial thanks to [Fast Mask RCNN](https://github.com/CharlesShang/FastMaskRCNN
 ## Progress (with expected time)
 - [x] Implement ROIAlign layer
 - [x] COCO dataloader with mask
-- [ ] FastRCNN with ROIAlign using ResNet-50-C4 (4/6)
+- [x] FastRCNN with ROIAlign using ResNet-50-C4
 - [ ] Training code (4/8)
 - [ ] Test the FastRCNN with ROI Algin (4/10)
 - [ ] MaskRCNN using ResNet-50-C4 (4/12)
 - [ ] FPN backbone (4/14)
+- [ ] Add License
 - [ ] Testing all code
 - [ ] Turing hyper-parameters
+- [ ] Consider removing dependency on numpy and cython
+- [ ] Clean the code and comment
 - [ ] Pretrained models
 - [ ] Demo code
