@@ -1,18 +1,20 @@
 # Mask RCNN in PyTorch
-This is a [PyTorch](https://github.com/pytorch/pytorch) implementation of [Mask RCNN](https://arxiv.org/abs/1703.06870).
-This project attempts to
-1. combine [Fast Mask RCNN](https://github.com/CharlesShang/FastMaskRCNN) 
-and [faster_rcnn_pytorch](https://github.com/longcw/faster_rcnn_pytorch) (Special thanks to these awesome authors)
-2. provide experimental setup for researchers to test their new models on top of this framework
-3. build ROIAlign layer in pure PyTorch.
+1. This is a [PyTorch](https://github.com/pytorch/pytorch) implementation of [Mask RCNN](https://arxiv.org/abs/1703.06870) which attempts to reproduce the results in [Mask RCNN](https://arxiv.org/abs/1703.06870).
+2. This project provides an implementation of ROI Align in CUDA C as well as a PyTorch nn.Module for it.
+3. The model architecture is based on the awesome [Faster RCNN with PyTorch](https://github.com/longcw/faster_rcnn_pytorch) repo.
+4. The experiment setup is based on [Image Classification Project Killer in Pytorch](https://github.com/felixgwu/img_classification_pk_pytorch) to minimize the effort of doing experiments and developing new models.
 
-## See you in two weeks. (Hopefully, one week after Fast Mask RCNN is done)
+Spectial thanks to [Fast Mask RCNN](https://github.com/CharlesShang/FastMaskRCNN) for being the catalyst of this project.
 
-## Progress
-- [ ] Adapt ROIAlign provided in FastMaskRNN
-- [ ] ROIAlign layer in pure PyTorch
-- [ ] Training
-- [ ] Evaluation
-- [ ] COCO Data Provider
-- [ ] Finishing writing this list
-- [ ] Checking the checkboxes
+## Progress (with expected time)
+- [x] Implement ROIAlign layer
+- [x] COCO dataloader with mask
+- [ ] FastRCNN with ROIAlign using ResNet-50-C4 (4/6)
+- [ ] Training code (4/8)
+- [ ] Test the FastRCNN with ROI Algin (4/10)
+- [ ] MaskRCNN using ResNet-50-C4 (4/12)
+- [ ] FPN backbone (4/14)
+- [ ] Testing all code
+- [ ] Turing hyper-parameters
+- [ ] Pretrained models
+- [ ] Demo code
