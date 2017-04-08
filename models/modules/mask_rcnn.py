@@ -76,7 +76,6 @@ class RegionProposalNetwork(nn.Module):
     def loss(self):
         return self.cross_entropy + self.loss_box * 10
 
-    @profile
     def forward(self, im_data, im_info, gt_boxes=None, gt_ishard=None,
                 dontcare_areas=None):
         # check im_data
@@ -230,13 +229,14 @@ class ObjectDetectionNetwork(nn.Module):
     def loss(self):
         return self.cross_entropy + self.loss_box * 10
 
-    @profile
     def forward(self, features, rois, roi_data=None):
         # roi align
         aligned_features = self.roi_align(features, rois)
         x = self.res5(aligned_features)
         x = self.avgpool(x).view(-1, 2048)
 
+        if self.debug:
+            print('aligned features size:', aligned_features.size())
 
         cls_score = self.score_fc(x)
         cls_prob = F.softmax(cls_score)
@@ -280,7 +280,6 @@ class FasterRCNN(nn.Module):
     def loss(self):
         return self.rpn.loss + self.odn.loss
 
-    @profile
     def forward(self, im_data, im_info, gt_boxes=None, gt_ishard=None,
                 dontcare_areas=None):
         features, rois = self.rpn(im_data, im_info, gt_boxes, gt_ishard,

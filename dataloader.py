@@ -92,7 +92,10 @@ class CocoDetection(torch.utils.data.Dataset):
                 path = tmppath
 
         # load image
-        img = Image.open(path).convert('RGB')
+        try:
+            img = Image.open(path).convert('RGB')
+        except:
+            print('path:', path)
         for ann in anns:
             # COCO uses x, y, w, h, but Faster RCNN uses x1, y1, x2, y2
             ann['bbox'][2] += ann['bbox'][0]
@@ -100,8 +103,8 @@ class CocoDetection(torch.utils.data.Dataset):
             # original id is in [1, 90] with skips, we convert them to a compact range [0, 79]
             ann['ordered_id'] = self.cid2ord[ann['category_id']]
             ann['scale_ratio'] = 1.
-            # get the mask for mask rcnn
-            ann['mask'] = torch.from_numpy(self.coco.annToMask(ann)).float().unsqueeze(0)
+            # # get the mask for mask rcnn
+            # ann['mask'] = torch.from_numpy(self.coco.annToMask(ann)).float().unsqueeze(0)
 
         # scaling image make shorter edge being scale_size 
         if self.scale_size is not None:
@@ -116,11 +119,11 @@ class CocoDetection(torch.utils.data.Dataset):
                     # print(ann['segmentation'])
                     # ann['segmentation'] = [[x * scale_ratio for x in y]
                     #                        for y in ann['segmentation']]
-                    mask = transforms.ToPILImage()(ann['mask'])
-                    mask = mask.resize((round(w * scale_ratio),
-                                        round(h * scale_ratio)),
-                                       Image.BILINEAR)
-                    ann['mask'] = transforms.ToTensor()(mask)
+                    # mask = transforms.ToPILImage()(ann['mask'])
+                    # mask = mask.resize((round(w * scale_ratio),
+                    #                     round(h * scale_ratio)),
+                    #                    Image.BILINEAR)
+                    # ann['mask'] = transforms.ToTensor()(mask)
                     ann['scale_ratio'] = scale_ratio
         
         # convert image to tensor and normalize it

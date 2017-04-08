@@ -17,7 +17,6 @@ import torch.nn as nn
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
-from torch.utils.data.dataloader import DataLoaderIter
 
 from colorama import Fore
 from importlib import import_module
@@ -47,7 +46,7 @@ exp_group = parser.add_argument_group('exp', 'experiment setting')
 exp_group.add_argument('--save', default='save/default-{}'.format(time.time()),
                        type=str, metavar='SAVE',
                        help='path to the experiment logging directory'
-                       '(default: save/debug)')
+                       '(default: save/default-CLOCKTIME)')
 exp_group.add_argument('--resume', default='', type=str, metavar='PATH',
                        help='path to latest checkpoint (default: none)')
 exp_group.add_argument('--evaluate', dest='evaluate', default='',
@@ -219,7 +218,6 @@ def main():
     else:
         train_loader, val_loader, test_loader = getDataloaders(
             splits=('train', 'val'), **vars(args))
-        train_loader_iter = DataLoaderIter(train_loader)
 
     # define optimizer
     optimizer = get_optimizer(model, args)
@@ -284,7 +282,7 @@ def main():
         #     log_value('lr', lr, i)
 
         # train for args.eval_freq iterations
-        train_loss = train(train_loader_iter, model, optimizer,
+        train_loss = train(train_loader, model, optimizer,
                            i, args.eval_freq)
         i += args.eval_freq - 1
 
@@ -319,7 +317,7 @@ def main():
     print('Best val_ap: {:.4f} at iter {}'.format(best_ap, best_iter))
 
 
-def train(train_loader_iter, model, optimizer, start_iter, num_iters):
+def train(train_loader, model, optimizer, start_iter, num_iters):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     total_losses = AverageMeter()
@@ -331,12 +329,15 @@ def train(train_loader_iter, model, optimizer, start_iter, num_iters):
     odn_box_losses = AverageMeter()
 
     # switch to train mode
+    end_iter = start_iter + num_iters - 1
     model.train()
 
     end = time.time()
-    for i in range(start_iter, start_iter + num_iters):
+    # for i in range(start_iter, start_iter + num_iters):
+    for i, (inputs, anns) in enumerate(train_loader):
+        i += start_iter
         # get minibatch
-        inputs, anns = next(train_loader_iter)
+        # inputs, anns = next(train_loader)
         lr = adjust_learning_rate(optimizer, args.lr, args.decay_rate,
                                   i, args.niters)  # TODO: add custom
         # measure data loading time
@@ -352,8 +353,8 @@ def train(train_loader_iter, model, optimizer, start_iter, num_iters):
             gt_bbox = np.vstack([ann['bbox'] + [ann['ordered_id']] for ann in input_anns])
             im_info= [[input.size(1), input.size(2),
                         input_anns[0]['scale_ratio']]]
-            input_var= torch.autograd.Variable(input.unsqueeze(0),
-                                 requires_grad=False).cuda()
+            input_var= torch.autograd.Variable(input.unsqueeze(0).cuda(),
+                                 requires_grad=False)
 
             cls_prob, bbox_pred, rois= model(input_var, im_info, gt_bbox)
             loss= model.loss
@@ -376,19 +377,19 @@ def train(train_loader_iter, model, optimizer, start_iter, num_iters):
 
         # measure elapsed time
         batch_time.update(time.time() - end)
-        end= time.time()
+        end = time.time()
 
         if args.print_freq > 0 and (i + 1) % args.print_freq == 0:
-            print('iter: [{0}]\t'
-                  'Time {batch_time.val:.3f}\t'
-                  'Data {data_time.val:.3f}\t'
-                  'Loss {total_losses.val:.4f}\t'
+            print('iter: [{0}] '
+                  'Time {batch_time.val:.3f} '
+                  'Data {data_time.val:.3f} '
+                  'Loss {total_losses.val:.4f} '
                   'RPN {rpn_losses.val:.4f} '
                   '{rpn_ce_losses.val:.4f} '
-                  '{rpn_box_losses.val:.4f}\t'
+                  '{rpn_box_losses.val:.4f} '
                   'ODN {odn_losses.val:.4f} '
                   '{odn_ce_losses.val:.4f} '
-                  '{odn_box_losses.val:.4f}\t'
+                  '{odn_box_losses.val:.4f} '
                   .format(i, batch_time=batch_time,
                           data_time=data_time,
                           total_losses=total_losses,
@@ -399,18 +400,21 @@ def train(train_loader_iter, model, optimizer, start_iter, num_iters):
                           odn_ce_losses=odn_ce_losses,
                           odn_box_losses=odn_box_losses))
 
-    end_iter= start_iter + num_iters - 1
+        del inputs
+        del anns
+        if i == end_iter:
+            break
 
-    print('iter: [{0}-{1}]\t'
-          'Time {batch_time.avg:.3f}\t'
-          'Data {data_time.avg:.3f}\t'
-          'Loss {total_losses.avg:.4f}\t'
+    print('iter: [{0}-{1}] '
+          'Time {batch_time.avg:.3f} '
+          'Data {data_time.avg:.3f} '
+          'Loss {total_losses.avg:.4f} '
           'RPN {rpn_losses.avg:.4f} '
           '{rpn_ce_losses.avg:.4f} '
-          '{rpn_box_losses.avg:.4f}\t'
+          '{rpn_box_losses.avg:.4f} '
           'ODN {odn_losses.avg:.4f} '
           '{odn_ce_losses.avg:.4f} '
-          '{odn_box_losses.avg:.4f}\t'
+          '{odn_box_losses.avg:.4f} '
           .format(start_iter, end_iter,
                   batch_time=batch_time,
                   data_time=data_time,
@@ -474,8 +478,8 @@ def validate(val_loader, model, i, silence=False):
     coco_eval.accumulate()
     coco_eval.summarize()
 
-    print('iter: [{0}]\t'
-          'Time {batch_time.avg:.3f}\t'
+    print('iter: [{0}] '
+          'Time {batch_time.avg:.3f} '
           'Val Stats: {1}'
           .format(i, coco_eval.stats,
                   batch_time=batch_time))
