@@ -33,75 +33,77 @@ def getDataloaders(data, config_of_data, splits=['train', 'val'],
 
         # uses last 5000 images of the original val split as the
         # mini validation set
-        trainval_set = CocoDetectionTrainVal(data_root, scale_size=800, transform=compose)
         if 'train' in splits:
-            if config_of_data['train_split'] == 'train':
-                indices = range(trainval_set.train_len())
-            elif config_of_data['train_split'] == 'trainval35k':
-                indices = range(len(trainval_set) - 5000)
-            else:
-                raise NotImplementedError
+            train_set = CocoDetection(data_root, config_of_data['train_split'],
+                                      scale_size=config_of_data['scale_size'],
+                                      transform=compose)
             train_loader = DataLoader(
-                trainval_set, batch_size=batch_size,
+                train_set, batch_size=batch_size,
                 collate_fn=coco_collate,
-                sampler=torch.utils.data.sampler.SubsetRandomSampler(indices),
+                shuffle=True,
                 num_workers=num_workers, pin_memory=False)
         if 'val' in splits:
-            if config_of_data['val_split'] == 'val':
-                indices = range(trainval_set.train_len(), len(trainval_set))
-            elif config_of_data['val_split'] == 'minival':
-                indices = range(len(trainval_set) - 5000, len(trainval_set))
-            else:
-                raise NotImplementedError
+            val_set = CocoDetection(data_root, config_of_data['val_split'],
+                                      scale_size=config_of_data['scale_size'],
+                                      transform=compose)
             val_loader = DataLoader(
-                trainval_set, batch_size=batch_size,
+                val_set, batch_size=batch_size,
                 collate_fn=coco_collate,
-                sampler=torch.utils.data.sampler.SubsetRandomSampler(indices),
+                shuffle=True,
                 num_workers=num_workers, pin_memory=False)
         if 'test' in splits:
-            # TODO: for loading testing files
-            raise NotImplementedError
+            test_set = CocoDetection(data_root, config_of_data['test_split'],
+                                      scale_size=config_of_data['scale_size'],
+                                      transform=compose)
+            test_loader = DataLoader(
+                test_set, batch_size=batch_size,
+                collate_fn=coco_collate,
+                shuffle=True,
+                num_workers=num_workers, pin_memory=False)
     else:
         raise NotImplemented
     return train_loader, val_loader, test_loader
 
 
 # Based on CocoDetection in torchvision
-class CocoDetectionTrainVal(torch.utils.data.Dataset):
+class CocoDetection(torch.utils.data.Dataset):
 
-    def __init__(self, root, scale_size=None, transform=None):
+    def __init__(self, root, annfile, scale_size=None, transform=None):
         from pycocotools.coco import COCO
         self.root = root
-        ann_train = os.path.join(self.root, 'annotations/instances_train2014.json')
-        ann_val = os.path.join(self.root, 'annotations/instances_val2014.json')
-        self.coco_train = COCO(ann_train)
-        self.coco_val = COCO(ann_val)
-        self.ids = list(self.coco_train.imgs.keys()) + list(self.coco_val.imgs.keys())
+        self.annfile = annfile
+        self.coco = COCO(os.path.join(root, annfile))
+        self.ids = list(self.coco.imgs.keys())
         self.transform = transform
         self.scale_size = scale_size
-        self.ord2cid = sorted(self.coco_train.cats.keys())
+        self.ord2cid = sorted(self.coco.cats.keys())
         self.cid2ord = {i: o for o, i in enumerate(self.ord2cid)}
 
     def __getitem__(self, index):
-        coco = self.coco_train if index < len(self.coco_train.imgs) else self.coco_val
-        img_root = 'train2014' if index < len(self.coco_train.imgs) else 'val2014'
         img_id = self.ids[index]
-        ann_ids = coco.getAnnIds(imgIds=img_id)
-        anns = coco.loadAnns(ann_ids)
+        ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        anns = self.coco.loadAnns(ann_ids)
 
-        path = coco.loadImgs(img_id)[0]['file_name']
+        # search across both train2014 and val2014 in case of using trainval35k
+        for subdir in ('train2014', 'val2014'):
+            tmppath = os.path.join(self.root, subdir,
+                                   self.coco.loadImgs(img_id)[0]['file_name'])
+            if os.path.isfile(tmppath):
+                path = tmppath
 
-        img = Image.open(os.path.join(self.root, img_root, path)).convert('RGB')
-
+        # load image
+        img = Image.open(path).convert('RGB')
         for ann in anns:
             # COCO uses x, y, w, h, but Faster RCNN uses x1, y1, x2, y2
             ann['bbox'][2] += ann['bbox'][0]
             ann['bbox'][3] += ann['bbox'][1]
+            # original id is in [1, 90] with skips, we convert them to a compact range [0, 79]
             ann['ordered_id'] = self.cid2ord[ann['category_id']]
             ann['scale_ratio'] = 1.
-            ann['mask'] = torch.from_numpy(coco.annToMask(ann)).float().unsqueeze(0)
+            # get the mask for mask rcnn
+            ann['mask'] = torch.from_numpy(self.coco.annToMask(ann)).float().unsqueeze(0)
 
-        # scaling
+        # scaling image make shorter edge being scale_size 
         if self.scale_size is not None:
             w, h = img.size
             scale_ratio = self.scale_size / w if w < h else self.scale_size / h
@@ -111,29 +113,24 @@ class CocoDetectionTrainVal(torch.utils.data.Dataset):
                 for ann in anns:
                     ann['area'] *= scale_ratio**2
                     ann['bbox'] = [x * scale_ratio for x in ann['bbox']]
-                    ann['segmentation'] = [[x * scale_ratio for x in y]
-                                           for y in ann['segmentation']]
+                    # print(ann['segmentation'])
+                    # ann['segmentation'] = [[x * scale_ratio for x in y]
+                    #                        for y in ann['segmentation']]
                     mask = transforms.ToPILImage()(ann['mask'])
-                    mask = mask.resize((round(w * scale_ratio + 0.5),
-                                        round(h * scale_ratio + 0.5)),
+                    mask = mask.resize((round(w * scale_ratio),
+                                        round(h * scale_ratio)),
                                        Image.BILINEAR)
                     ann['mask'] = transforms.ToTensor()(mask)
                     ann['scale_ratio'] = scale_ratio
-
+        
+        # convert image to tensor and normalize it
         if self.transform is not None:
             img = self.transform(img)
-
 
         return img, anns
 
     def __len__(self):
         return len(self.ids)
-
-    def train_len(self):
-        return len(self.coco_train.imgs)
-
-    def val_len(self):
-        return len(self.coco_val.imgs)
 
 
 def coco_collate(batch):
