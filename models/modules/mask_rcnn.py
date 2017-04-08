@@ -234,7 +234,6 @@ class ObjectDetectionNetwork(nn.Module):
     def forward(self, features, rois, roi_data=None):
         # roi align
         aligned_features = self.roi_align(features, rois)
-        print('aligned features size:', aligned_features.size())
         x = self.res5(aligned_features)
         x = self.avgpool(x).view(-1, 2048)
 
