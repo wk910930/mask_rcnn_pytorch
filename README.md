@@ -10,14 +10,14 @@ Spectial thanks to [Fast Mask RCNN](https://github.com/CharlesShang/FastMaskRCNN
 - [x] ROIAlign layer (It is not explained in the paper how four regular locations are chosen, so currently, this implementation uses 4 corners of each bin. This may be changed either after hyper-parameter tuning stage or after the release of the original code.)
 - [x] COCO dataloader with mask
 - [x] FastRCNN with ROIAlign using ResNet-50-C4
-- [ ] Training code (4/8)
-- [ ] Test the FastRCNN with ROI Algin (4/10)
+- [x] Training code
+- [ ] Test the FastRCNN with ROI Algin (In progress)
 - [ ] MaskRCNN using ResNet-50-C4 (4/12)
 - [ ] FPN backbone (4/14)
-- [ ] Add License
 - [ ] Testing all code
 - [ ] Turing hyper-parameters
-- [ ] Consider removing dependency on numpy and cython
+- [ ] Considering removing dependency of numpy and cython
+- [ ] Speed up
 - [ ] Clean the code and comment
 - [ ] Pretrained models
 - [ ] Demo code
