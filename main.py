@@ -85,24 +85,6 @@ arch_group.add_argument('--arch', '-a', metavar='ARCH', default='faster_rcnn',
                         ' (default: faster_rcnn)')
 arch_group.add_argument('--backbone', metavar='BACKBONE', default='resnet-50-c4',
                         type=str, help='backbone of RPN')
-# arch_group.add_argument('-d', '--depth', default=56, type=int, metavar='D',
-#                         help='depth (default=56)')
-# arch_group.add_argument('--drop-rate', default=0.0, type=float,
-#                         metavar='DROPRATE', help='dropout rate (default: 0.2)')
-# arch_group.add_argument('--death-mode', default='none',
-#                         choices=['none', 'linear', 'uniform'],
-#                         help='death mode (default: none)')
-# arch_group.add_argument('--death-rate', default=0.5, type=float,
-#                         help='death rate rate (default: 0.5)')
-# arch_group.add_argument('--bn-size', default=4, type=int,
-#                         metavar='B', help='bottle neck ratio for DenseNet'
-#                         ' (0 means dot\'t use bottle necks) (default: 4)')
-# arch_group.add_argument('--compression', default=0.5, type=float,
-#                         metavar='C', help='compression ratio for DenseNet'
-#                         ' (1 means dot\'t use compression) (default: 0.5)')
-# used to set the argument when to resume automatically
-# arch_resume_names = ['arch', 'depth', 'death_mode', 'death_rate', 'death_rate',
-                     # 'bn_size', 'compression']
 
 # training related
 optim_group = parser.add_argument_group('optimization', 'optimization setting')
