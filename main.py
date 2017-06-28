@@ -246,7 +246,7 @@ def main():
     log_print('args:')
     log_print(args)
     print('model:', file=f_log)
-    print(model, file=f_log, flush=True)
+    print(model, file=f_log)
     # log_print('model:')
     # log_print(model)
     # log_print('optimizer:')
