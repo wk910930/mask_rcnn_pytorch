@@ -86,7 +86,7 @@ class CocoDetection(torch.utils.data.Dataset):
 
         # search across both train2014 and val2014 in case of using trainval35k
         for subdir in ('train2014', 'val2014'):
-            tmppath = os.path.join(self.root, subdir,
+            tmppath = os.path.join(self.root, 'images', subdir,
                                    self.coco.loadImgs(img_id)[0]['file_name'])
             if os.path.isfile(tmppath):
                 path = tmppath
